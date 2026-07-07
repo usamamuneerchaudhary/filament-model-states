@@ -110,11 +110,7 @@ document.addEventListener('alpine:init', () => {
                 return false;
             }
 
-            const allowed = this.transitions[source];
-
-            if (allowed === undefined) {
-                return true;
-            }
+            const allowed = this.transitions[source] ?? [];
 
             return allowed.includes(target);
         },

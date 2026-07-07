@@ -26,6 +26,11 @@ abstract class StateKanbanBoard extends Widget
     public ?string $columnFilter = null;
 
     /**
+     * @var list<array{key: string, records: Collection<int, Model>, total: int, shown: int, has_more: bool}>|null
+     */
+    protected ?array $cachedBoardColumns = null;
+
+    /**
      * The Eloquent model class this board manages, e.g. Order::class.
      */
     abstract protected function getModel(): string;
@@ -105,13 +110,16 @@ abstract class StateKanbanBoard extends Widget
      */
     public function getTransitionMapForView(): array
     {
+        $columns = $this->getColumns();
         $allowedTransitions = $this->getAllowedTransitions();
 
         if ($allowedTransitions !== null) {
-            return $allowedTransitions;
+            return collect($columns)
+                ->mapWithKeys(fn (string $column): array => [
+                    $column => array_values($allowedTransitions[$column] ?? []),
+                ])
+                ->all();
         }
-
-        $columns = $this->getColumns();
 
         return collect($columns)
             ->mapWithKeys(fn (string $column): array => [
@@ -211,24 +219,60 @@ abstract class StateKanbanBoard extends Widget
     }
 
     /**
+     * @return array<string, Collection<int, Model>>
+     */
+    protected function fetchRecordsGroupedByColumn(array $columns, int $limit): array
+    {
+        $field = $this->getStateField();
+        $totals = $this->getColumnTotals();
+        $totalMatchingRecords = array_sum($totals);
+        $maxSingleFetch = count($columns) * $limit;
+
+        if ($totalMatchingRecords <= $maxSingleFetch) {
+            $grouped = $this->getFilteredQuery()
+                ->whereIn($field, $columns)
+                ->orderByDesc('updated_at')
+                ->get()
+                ->groupBy(fn (Model $record): string => $this->resolveColumnKey($record));
+
+            return collect($columns)
+                ->mapWithKeys(fn (string $column): array => [
+                    $column => ($grouped->get($column) ?? collect())->take($limit)->values(),
+                ])
+                ->all();
+        }
+
+        return collect($columns)
+            ->mapWithKeys(function (string $column) use ($field, $limit): array {
+                return [
+                    $column => $this->getFilteredQuery()
+                        ->where($field, $column)
+                        ->latest('updated_at')
+                        ->limit($limit)
+                        ->get(),
+                ];
+            })
+            ->all();
+    }
+
+    /**
      * @return list<array{key: string, records: Collection<int, Model>, total: int, shown: int, has_more: bool}>
      */
     public function getBoardColumns(): array
     {
+        if ($this->cachedBoardColumns !== null) {
+            return $this->cachedBoardColumns;
+        }
+
         $columns = $this->getColumns();
         $totals = $this->getColumnTotals();
         $limit = $this->getRecordsPerColumnLimit();
-        $field = $this->getStateField();
+        $recordsByColumn = $this->fetchRecordsGroupedByColumn($columns, $limit);
 
-        return collect($columns)
-            ->map(function (string $column) use ($totals, $limit, $field): array {
+        return $this->cachedBoardColumns = collect($columns)
+            ->map(function (string $column) use ($totals, $recordsByColumn): array {
+                $records = $recordsByColumn[$column];
                 $total = (int) ($totals[$column] ?? 0);
-
-                $records = $this->getFilteredQuery()
-                    ->where($field, $column)
-                    ->latest('updated_at')
-                    ->limit($limit)
-                    ->get();
 
                 return [
                     'key' => $column,
@@ -269,7 +313,7 @@ abstract class StateKanbanBoard extends Widget
         try {
             DB::transaction(function () use ($recordId, $targetColumn, &$sourceColumn, &$moved): void {
                 /** @var Model $record */
-                $record = $this->getModel()::query()->lockForUpdate()->findOrFail($recordId);
+                $record = $this->getQuery()->lockForUpdate()->findOrFail($recordId);
 
                 $this->authorizeMoveRecord($record);
 
@@ -348,7 +392,7 @@ abstract class StateKanbanBoard extends Widget
             $record->save();
         }
 
-        if (method_exists($record, 'setStatus')) {
+        if (method_exists($record, 'setStatus') && $record->status()?->name !== $targetColumn) {
             $record->setStatus($targetColumn, 'Moved via Kanban board');
         }
     }
@@ -380,6 +424,12 @@ abstract class StateKanbanBoard extends Widget
         }
 
         if (is_object($state)) {
+            $stateClass = $state::class;
+
+            if (method_exists($stateClass, 'getMorphClass')) {
+                return (string) $stateClass::getMorphClass();
+            }
+
             if (method_exists($state, 'getValue')) {
                 return (string) $state->getValue();
             }

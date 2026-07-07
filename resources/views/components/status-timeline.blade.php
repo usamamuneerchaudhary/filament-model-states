@@ -21,7 +21,7 @@
 
                     <div class="fi-model-states-timeline__meta">
                         <x-filament::badge :color="$item['is_current'] ? 'primary' : 'gray'">
-                            {{ ucfirst(str_replace(['_', '-'], ' ', $item['name'])) }}
+                            {{ $getStatusLabel($getRecord(), $item['name']) }}
                         </x-filament::badge>
 
                         @if ($item['is_current'])

@@ -3,7 +3,7 @@
     $transitions = $this->getTransitionMapForView();
     $columnLabels = $this->getColumnLabelsForView();
     $totalCount = $this->getTotalCount();
-    $visibleCount = $this->getVisibleCardsCount();
+    $visibleCount = collect($boardColumns)->sum('shown');
     $recordsPerColumn = $this->getRecordsPerColumnLimit();
 @endphp
 

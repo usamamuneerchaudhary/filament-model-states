@@ -7,6 +7,7 @@ namespace Usamamuneerchaudhary\FilamentModelStates\Infolists\Components;
 use Filament\Infolists\Components\Entry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Usamamuneerchaudhary\FilamentModelStates\Support\StateConfigurationResolver;
 
 class StatusTimelineEntry extends Entry
 {
@@ -28,7 +29,7 @@ class StatusTimelineEntry extends Entry
     }
 
     /**
-     * Limit how many history entries are shown before "load more".
+     * Limit how many history entries are shown.
      */
     public function limit(int $limit): static
     {
@@ -59,6 +60,17 @@ class StatusTimelineEntry extends Entry
     public function getEmptyStateLabel(): string
     {
         return $this->emptyStateLabel ?? 'No status changes recorded yet.';
+    }
+
+    public function getStatusLabel(Model $record, string $statusName): string
+    {
+        try {
+            $configuration = app(StateConfigurationResolver::class)->resolve($record::class);
+
+            return $configuration->labelFor($statusName);
+        } catch (\Throwable) {
+            return ucfirst(str_replace(['_', '-'], ' ', $statusName));
+        }
     }
 
     /**
