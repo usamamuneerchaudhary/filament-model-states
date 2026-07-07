@@ -1,7 +1,7 @@
 {
     "name": "usamamuneerchaudhary/filament-model-states",
     "description": "State-machine-aware timeline and Kanban board components for Filament, built on top of spatie/laravel-model-states.",
-    "keywords": ["laravel", "php" ,"filament", "filament-plugin", "filament-v5", "spatie", "model-states", "model-status", "kanban", "timeline"],
+    "keywords": ["laravel", "php", "filament", "filament-plugin", "filament-v5", "spatie", "model-states", "model-status", "kanban", "timeline"],
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -21,9 +21,20 @@
     "suggest": {
         "spatie/laravel-model-states": "Required if you want Kanban drag-and-drop with server-side transition validation (canTransitionTo). Without it, the Kanban board still works but allows any column move."
     },
+    "require-dev": {
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
+    },
     "autoload": {
         "psr-4": {
             "Usamamuneerchaudhary\\FilamentModelStates\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Usamamuneerchaudhary\\FilamentModelStates\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -31,6 +42,16 @@
             "providers": [
                 "Usamamuneerchaudhary\\FilamentModelStates\\FilamentModelStatesServiceProvider"
             ]
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
         }
     },
     "minimum-stability": "stable",

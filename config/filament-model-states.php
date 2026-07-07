@@ -23,7 +23,7 @@ return [
     |
     | 'column_colors' maps a state/status name to a Filament color token.
     | Anything not listed falls back to 'gray'. This is a *default* map —
-    | individual StateKanbanBoard widgets can override via ->columnColors().
+    | individual StateKanbanBoard widgets can override via getColumnColor().
     |
     */
     'kanban' => [
