@@ -1,0 +1,344 @@
+.fi-model-states-kanban {
+    display: grid;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.fi-model-states-kanban__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.fi-model-states-kanban__search {
+    flex: 1 1 14rem;
+    min-width: 12rem;
+}
+
+.fi-model-states-kanban__filter {
+    flex: 0 1 12rem;
+    min-width: 10rem;
+}
+
+.fi-model-states-kanban__stats {
+    flex: 1 1 100%;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: rgb(107 114 128);
+}
+
+.dark .fi-model-states-kanban__stats,
+.fi-body.fi-body--dark .fi-model-states-kanban__stats {
+    color: rgb(156 163 175);
+}
+
+.fi-model-states-kanban__stats-note {
+    color: rgb(156 163 175);
+}
+
+.fi-model-states-kanban__empty-column {
+    margin: 0;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    font-style: italic;
+    color: rgb(156 163 175);
+}
+
+.fi-model-states-kanban__more-note {
+    margin: 0.5rem 0 0;
+    padding-inline: 0.25rem;
+    font-size: 0.6875rem;
+    color: rgb(107 114 128);
+}
+
+.fi-model-states-kanban__confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: rgb(0 0 0 / 0.45);
+}
+
+.fi-model-states-kanban__confirm-dialog {
+    width: 100%;
+    max-width: 28rem;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    background-color: rgb(255 255 255);
+    box-shadow: 0 20px 40px rgb(0 0 0 / 0.2);
+}
+
+.dark .fi-model-states-kanban__confirm-dialog,
+.fi-body.fi-body--dark .fi-model-states-kanban__confirm-dialog {
+    background-color: rgb(31 41 55);
+}
+
+.fi-model-states-kanban__confirm-title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgb(3 7 18);
+}
+
+.dark .fi-model-states-kanban__confirm-title,
+.fi-body.fi-body--dark .fi-model-states-kanban__confirm-title {
+    color: rgb(255 255 255);
+}
+
+.fi-model-states-kanban__confirm-body {
+    margin: 0 0 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: rgb(75 85 99);
+}
+
+.dark .fi-model-states-kanban__confirm-body,
+.fi-body.fi-body--dark .fi-model-states-kanban__confirm-body {
+    color: rgb(209 213 219);
+}
+
+.fi-model-states-kanban__confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.fi-model-states-kanban__column {
+    display: flex;
+    flex-direction: column;
+    min-width: 15rem;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background-color: rgb(249 250 251);
+}
+
+.dark .fi-model-states-kanban__column,
+.fi-body.fi-body--dark .fi-model-states-kanban__column {
+    background-color: rgb(255 255 255 / 0.05);
+}
+
+.fi-model-states-kanban__column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding-inline: 0.25rem;
+}
+
+.fi-model-states-kanban__transitions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+    padding-inline: 0.25rem;
+}
+
+.fi-model-states-kanban__transitions-label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgb(107 114 128);
+}
+
+.fi-model-states-kanban__transition-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: rgb(55 65 81);
+    background-color: rgb(243 244 246);
+    outline: 1px solid rgb(229 231 235);
+}
+
+.dark .fi-model-states-kanban__transition-chip,
+.fi-body.fi-body--dark .fi-model-states-kanban__transition-chip {
+    color: rgb(229 231 235);
+    background-color: rgb(255 255 255 / 0.08);
+    outline-color: rgb(255 255 255 / 0.12);
+}
+
+.fi-model-states-kanban__terminal-note {
+    margin: 0 0 0.75rem;
+    padding-inline: 0.25rem;
+    font-size: 0.6875rem;
+    font-style: italic;
+    color: rgb(156 163 175);
+}
+
+.fi-model-states-kanban__column--droppable {
+    outline: 2px solid var(--primary-500, rgb(245 158 11));
+    outline-offset: 2px;
+}
+
+.fi-model-states-kanban__column--blocked {
+    opacity: 0.45;
+}
+
+.fi-model-states-kanban__column--source {
+    outline: 2px dashed rgb(156 163 175);
+    outline-offset: 2px;
+}
+
+.fi-model-states-kanban__card--ghost {
+    opacity: 0.35;
+}
+
+.fi-model-states-kanban__card--dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+}
+
+.fi-model-states-kanban__column-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(3 7 18);
+}
+
+.dark .fi-model-states-kanban__column-title,
+.fi-body.fi-body--dark .fi-model-states-kanban__column-title {
+    color: rgb(255 255 255);
+}
+
+.fi-model-states-kanban__column-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 5rem;
+}
+
+.fi-model-states-kanban__card {
+    cursor: grab;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background-color: rgb(255 255 255);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    outline: 1px solid rgb(3 7 18 / 0.05);
+}
+
+.fi-model-states-kanban__card:active {
+    cursor: grabbing;
+}
+
+.dark .fi-model-states-kanban__card,
+.fi-body.fi-body--dark .fi-model-states-kanban__card {
+    background-color: rgb(31 41 55);
+    outline-color: rgb(255 255 255 / 0.1);
+}
+
+.fi-model-states-kanban__card-title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(3 7 18);
+}
+
+.dark .fi-model-states-kanban__card-title,
+.fi-body.fi-body--dark .fi-model-states-kanban__card-title {
+    color: rgb(255 255 255);
+}
+
+.fi-model-states-kanban__card-subtitle {
+    margin: 0.125rem 0 0;
+    font-size: 0.75rem;
+    color: rgb(107 114 128);
+}
+
+.dark .fi-model-states-kanban__card-subtitle,
+.fi-body.fi-body--dark .fi-model-states-kanban__card-subtitle {
+    color: rgb(156 163 175);
+}
+
+.fi-model-states-timeline {
+    width: 100%;
+}
+
+.fi-model-states-timeline__list {
+    position: relative;
+    margin-inline-start: 0.75rem;
+    padding: 0;
+    list-style: none;
+    border-inline-start: 1px solid rgb(229 231 235);
+}
+
+.dark .fi-model-states-timeline__list,
+.fi-body.fi-body--dark .fi-model-states-timeline__list {
+    border-inline-start-color: rgb(55 65 81);
+}
+
+.fi-model-states-timeline__item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    margin-inline-start: 1.5rem;
+}
+
+.fi-model-states-timeline__item:last-child {
+    margin-bottom: 0;
+}
+
+.fi-model-states-timeline__dot {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    inset-inline-start: -1.65rem;
+    box-shadow: 0 0 0 4px rgb(255 255 255);
+    background-color: rgb(209 213 219);
+}
+
+.fi-model-states-timeline__dot--current {
+    background-color: var(--primary-500, rgb(245 158 11));
+}
+
+.dark .fi-model-states-timeline__dot,
+.fi-body.fi-body--dark .fi-model-states-timeline__dot {
+    box-shadow: 0 0 0 4px rgb(17 24 39);
+    background-color: rgb(75 85 99);
+}
+
+.fi-model-states-timeline__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fi-model-states-timeline__current-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--primary-600, rgb(217 119 6));
+}
+
+.fi-model-states-timeline__time {
+    font-size: 0.75rem;
+    color: rgb(156 163 175);
+}
+
+.fi-model-states-timeline__reason {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: rgb(75 85 99);
+}
+
+.dark .fi-model-states-timeline__reason,
+.fi-body.fi-body--dark .fi-model-states-timeline__reason {
+    color: rgb(209 213 219);
+}
+
+.fi-model-states-timeline__duration {
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    color: rgb(156 163 175);
+}
