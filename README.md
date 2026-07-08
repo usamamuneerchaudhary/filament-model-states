@@ -1,5 +1,11 @@
 # Filament Model States
-
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/usamamuneerchaudhary/filament-model-states?style=flat-square&g)](https://packagist.org/packages/usamamuneerchaudhary/filament-model-states)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/badges/quality-score.png?b=main)](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/?branch=main)
+[![CodeFactor](https://www.codefactor.io/repository/github/usamamuneerchaudhary/filament-model-states/badge)](https://www.codefactor.io/repository/github/usamamuneerchaudhary/filament-model-states)
+[![Build Status](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/badges/build.png?b=main)](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/build-status/main)
+[![Code Intelligence Status](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/badges/code-intelligence.svg?b=main)](https://scrutinizer-ci.com/code-intelligence)
+[![Total Downloads](https://img.shields.io/packagist/dt/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://packagist.org/packages/usamamuneerchaudhary/filament-model-states)
+[![Licence](https://img.shields.io/packagist/l/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://github.com/usamamuneerchaudhary/filament-model-states/blob/HEAD/LICENSE.md)
 ![kanban.gif](public/images/kanban.gif)
 
 State-aware **Kanban board** and **status timeline** components for Filament v5.
