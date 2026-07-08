@@ -291,11 +291,11 @@ On drag-and-drop:
 
 ### Column keys and labels
 
-| Property | Used for |
-|----------|----------|
-| `public static string $name = 'initiated'` | Column key (DB value / morph class) |
-| `label()` | Column header label (optional) |
-| `description()` | **Not** used for Kanban headers — keep this for tooltips or detail views |
+| Property | Used for                                                                |
+|----------|-------------------------------------------------------------------------|
+| `public static string $name = 'initiated'` | Column key (DB value / morph class)                                     |
+| `label()` | Column header label (optional)                                          |
+| `description()` | **Not** used for Kanban headers, keep this for tooltips or detail views |
 
 Without `label()`, headers are generated from `$name` (e.g. `initiated` → "Initiated").
 
