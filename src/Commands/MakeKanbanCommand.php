@@ -154,7 +154,7 @@ PHP;
         }
 
         note("Register on list page [{$listPageClass}]:");
-        note('    ' . class_basename($modelClass) . 'Resource::getStateKanbanBoard()');
+        note('    '.class_basename($modelClass).'Resource::getStateKanbanBoard()');
     }
 
     protected function resolveModelClass(?string $model): ?string
@@ -169,7 +169,7 @@ PHP;
             return $model;
         }
 
-        $candidate = 'App\\Models\\' . $model;
+        $candidate = 'App\\Models\\'.$model;
 
         return class_exists($candidate) ? $candidate : null;
     }
@@ -183,7 +183,7 @@ PHP;
                 return $resource;
             }
 
-            $candidate = 'App\\Filament\\Resources\\' . $resource;
+            $candidate = 'App\\Filament\\Resources\\'.$resource;
 
             if (class_exists($candidate)) {
                 return $candidate;

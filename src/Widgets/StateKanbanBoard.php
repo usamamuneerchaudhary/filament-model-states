@@ -7,6 +7,7 @@ namespace Usamamuneerchaudhary\FilamentModelStates\Widgets;
 use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -19,7 +20,7 @@ abstract class StateKanbanBoard extends Widget
 {
     protected string $view = 'filament-model-states::widgets.state-kanban-board';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public string $search = '';
 
@@ -299,7 +300,7 @@ abstract class StateKanbanBoard extends Widget
     /**
      * Called from the frontend when a card is dropped on a new column.
      */
-    public function moveRecord(int | string $recordId, string $targetColumn): void
+    public function moveRecord(int|string $recordId, string $targetColumn): void
     {
         if (! in_array($targetColumn, $this->getColumns(), true)) {
             $this->rejectMove(null, $targetColumn, 'Unknown target column.');
@@ -474,6 +475,6 @@ abstract class StateKanbanBoard extends Widget
 
     protected function shouldRejectMoveException(Throwable $exception): bool
     {
-        return ! ($exception instanceof \Illuminate\Auth\Access\AuthorizationException);
+        return ! ($exception instanceof AuthorizationException);
     }
 }

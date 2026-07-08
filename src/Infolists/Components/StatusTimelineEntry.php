@@ -103,7 +103,7 @@ class StatusTimelineEntry extends Entry
                 'ended_at' => $endedAt,
                 'duration' => $endedAt
                     ? $status->created_at->diffForHumans($endedAt, true)
-                    : $status->created_at->diffForHumans(null, true) . ' so far',
+                    : $status->created_at->diffForHumans(null, true).' so far',
                 'is_current' => $index === 0,
             ];
         });

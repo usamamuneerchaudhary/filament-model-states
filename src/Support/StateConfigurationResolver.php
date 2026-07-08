@@ -6,7 +6,6 @@ namespace Usamamuneerchaudhary\FilamentModelStates\Support;
 
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class StateConfigurationResolver

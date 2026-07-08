@@ -41,7 +41,7 @@ class SpatieStateOrdering
     }
 
     /**
-     * @param  list<string>  $explicitOrder Morph keys or state class names.
+     * @param  list<string>  $explicitOrder  Morph keys or state class names.
      * @param  list<class-string>  $stateClasses
      * @return list<class-string>
      */
@@ -213,7 +213,7 @@ class SpatieStateOrdering
             }
 
             $className = pathinfo($file, PATHINFO_FILENAME);
-            $stateClass = $namespace . '\\' . $className;
+            $stateClass = $namespace.'\\'.$className;
 
             if (! class_exists($stateClass) || ! is_subclass_of($stateClass, $baseStateClass)) {
                 continue;

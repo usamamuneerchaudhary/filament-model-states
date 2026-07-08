@@ -29,9 +29,9 @@ class FilamentModelStatesServiceProvider extends PackageServiceProvider
         }
 
         FilamentAsset::register([
-            Css::make('filament-model-states', __DIR__ . '/../resources/css/filament-model-states.css'),
-            Js::make('sortable', __DIR__ . '/../resources/js/sortable.min.js'),
-            Js::make('kanban-board', __DIR__ . '/../resources/js/kanban-board.js'),
+            Css::make('filament-model-states', __DIR__.'/../resources/css/filament-model-states.css'),
+            Js::make('sortable', __DIR__.'/../resources/js/sortable.min.js'),
+            Js::make('kanban-board', __DIR__.'/../resources/js/kanban-board.js'),
         ], package: 'filament-model-states');
     }
 }

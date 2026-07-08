@@ -54,7 +54,6 @@ class SpatieStateTransitionMap
     }
 
     /**
-     * @param  object  $config
      * @param  list<class-string>  $stateClasses
      * @param  array<string, string>  $columnKeyByMorph
      * @param  list<string>  $columnOrder
