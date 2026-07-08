@@ -1,41 +1,43 @@
 # Filament Model States
 
-State-machine-aware **Kanban board** and **status timeline** components for Filament v5.
+State-aware **Kanban board** and **status timeline** components for Filament v5.
 
 Built to sit on top of:
 
-- [`spatie/laravel-model-status`](https://github.com/spatie/laravel-model-status) — powers the **timeline** (status history log)
-- [`spatie/laravel-model-states`](https://github.com/spatie/laravel-model-states) — powers **transition validation** and column discovery on the Kanban board (optional but recommended)
+- [`spatie/laravel-model-status`](https://github.com/spatie/laravel-model-status) > powers the **timeline** (status history log)
+- [`spatie/laravel-model-states`](https://github.com/spatie/laravel-model-states) > powers **transition validation** and column discovery on the Kanban board (optional but recommended)
 
-Neither Spatie package ships a Filament UI. This package does — with plug-and-play auto-detection for enums, Spatie Model States, or plain database values.
 
+Filament Model States provides a plug and play auto-detection for enums, Spatie Model States, or plain database values.
 ## Requirements
 
 - PHP 8.3+
 - Laravel 11–13
 - Filament v5
-- `spatie/laravel-model-status` (required — timeline + optional status logging on Kanban moves)
-- `spatie/laravel-model-states` (optional — server-side transition validation and config-driven column order)
+- `spatie/laravel-model-status` (required for timeline + optional status logging on Kanban moves)
+- `spatie/laravel-model-states` (optional for server-side transition validation and config-driven column order)
 
 ## Installation
 
 ```bash
 composer require usamamuneerchaudhary/filament-model-states
+```
+```
 php artisan vendor:publish --tag="filament-model-states-config"
-php artisan filament:assets
 ```
 
+```
+php artisan filament:assets
+```
 After upgrading the package, re-run `php artisan filament:assets` and hard-refresh your browser if Kanban styles or drag-and-drop stop working.
 
 ---
 
 ## Quick start
 
-The fastest path — no custom widget file required.
-
 ### 1. Prepare your model
 
-**Option A — backed enum (simplest)**
+**Option A: backed enum (simplest)**
 
 ```php
 use Spatie\ModelStatus\HasStatuses;
@@ -81,7 +83,7 @@ enum WorkflowState: string
 }
 ```
 
-**Option B — Spatie Model States**
+**Option B: Spatie Model States**
 
 ```php
 use Spatie\ModelStates\HasStates;
@@ -100,8 +102,6 @@ class Booking extends Model
     }
 }
 ```
-
-Place concrete state classes (`Initiated.php`, `Pending.php`, …) in the **same directory** as your abstract `BookingState.php`. Define transitions in `BookingState::config()` as usual.
 
 ### 2. Add the Kanban to a resource list page
 
@@ -125,7 +125,7 @@ protected function getHeaderWidgets(): array
     ];
 }
 ```
-
+![Screenshot](public/images/screenshot.png)
 That's it. Columns, labels, transitions, and column order are auto-detected.
 
 ### 3. Verify detection (optional)
@@ -133,14 +133,13 @@ That's it. Columns, labels, transitions, and column order are auto-detected.
 ```bash
 php artisan filament-model-states:make-kanban Booking --detect --state-field=status
 ```
-
 ---
 
 ## Kanban board
 
 ### Plug-and-play widget
 
-Point the board at any model — no subclass required:
+Point the board at any model, no subclass required:
 
 ```php
 use Usamamuneerchaudhary\FilamentModelStates\Widgets\ModelStateKanbanBoard;
@@ -285,10 +284,10 @@ abstract class BookingState extends State
 
 On drag-and-drop:
 
-1. **UI** — only allowed target columns are highlighted; invalid targets are blocked client-side.
-2. **Server** — `$currentState->canTransitionTo($targetStateClass)` is called before saving.
-3. **Persist** — `$currentState->transitionTo($targetStateClass)` runs your transition classes (`ToAwaitingPayment`, etc.).
-4. **History** — if the model uses `HasStatuses`, `setStatus()` is called automatically.
+1. **UI**: only allowed target columns are highlighted; invalid targets are blocked client-side.
+2. **Server**: `$currentState->canTransitionTo($targetStateClass)` is called before saving.
+3. **Persist**: `$currentState->transitionTo($targetStateClass)` runs your transition classes (`ToAwaitingPayment`, etc.).
+4. **History**: if the model uses `HasStatuses`, `setStatus()` is called automatically.
 
 ### Column keys and labels
 
@@ -298,7 +297,7 @@ On drag-and-drop:
 | `label()` | Column header label (optional) |
 | `description()` | **Not** used for Kanban headers — keep this for tooltips or detail views |
 
-Without `label()`, headers are generated from `$name` (e.g. `awaiting_payment` → "Awaiting Payment").
+Without `label()`, headers are generated from `$name` (e.g. `initiated` → "Initiated").
 
 ```php
 class Initiated extends BookingState
@@ -312,7 +311,7 @@ class Initiated extends BookingState
 
     public static function description(): ?string
     {
-        return 'Booking has just been created and the customer is selecting flights.';
+        return 'Booking has just been created';
     }
 }
 ```
@@ -323,8 +322,8 @@ Columns are ordered automatically. Priority:
 
 1. **`columnOrder()`** on the abstract state class (explicit override)
 2. **`$sortOrder`** or **`sortOrder()`** on each concrete state class
-3. **Config registration order** — default state first, then the order `allowTransition()` calls appear in `config()`
-4. **Filesystem discovery** — remaining states in directory order
+3. **Config registration order**: default state first, then the order `allowTransition()` calls appear in `config()`
+4. **Filesystem discovery**: remaining states in directory order
 
 Explicit order example:
 
@@ -486,13 +485,13 @@ StatusTimelineEntry::make('status_history')
 ## Kanban features
 
 - **Drag-and-drop** between columns with SortableJS (bundled, no CDN)
-- **Server-side validation** — invalid moves are rejected with a notification; cards snap back
+- **Server-side validation**: invalid moves are rejected with a notification; cards snap back
 - **Confirmation modal** before saving a move (configurable)
-- **Search** — filters cards when `scopeFilamentKanbanSearch` is defined
-- **Column filter** — dropdown to focus on a single column
-- **Totals** — SQL counts per column; cards are paginated per column
-- **Transition hints** — "Can move to" chips under each column header
-- **Authorization** — `Gate::authorize('update', $record)` on every move
+- **Search**: filters cards when `scopeFilamentKanbanSearch` is defined
+- **Column filter**: dropdown to focus on a single column
+- **Totals**: SQL counts per column; cards are paginated per column
+- **Transition hints**: "Can move to" chips under each column header
+- **Authorization**: `Gate::authorize('update', $record)` on every move
 
 ---
 
@@ -570,23 +569,23 @@ When a card is dropped on a new column, `moveRecord()` runs **server-side**:
 1. Loads the record with a row lock.
 2. Authorizes `update` on the record.
 3. Checks the transition:
-   - **Spatie Model States** — `$state->canTransitionTo($targetStateClass)`
-   - **Enum / manual map** — `getAllowedTransitions()` array
-   - **No rules** — all moves allowed
+   - **Spatie Model States**: `$state->canTransitionTo($targetStateClass)`
+   - **Enum / manual map**: `getAllowedTransitions()` array
+   - **No rules**: all moves allowed
 4. Persists via `transitionTo()` (Spatie) or direct attribute save (enum/DB).
 5. Optionally logs to status history via `setStatus()`.
 
-The browser cannot bypass step 3 — enforcement lives in your state machine, not JavaScript.
+The browser cannot bypass step 3, enforcement lives in your state machine, not JavaScript.
 
 ---
 
 ## Where to register the board
 
-| Location | How |
-|----------|-----|
-| **Resource list page** (recommended) | `getHeaderWidgets()` → `YourResource::getStateKanbanBoard()` |
+| Location | How                                                                                            |
+|----------|------------------------------------------------------------------------------------------------|
+| **Resource list page** (recommended) | `getHeaderWidgets()` → `YourResource::getStateKanbanBoard()`                                   |
 | **Custom page** | `ModelStateKanbanBoard::for(YourModel::class)` in `getHeaderWidgets()` or `getFooterWidgets()` |
-| **Panel widgets** | Only if you want a global board — usually prefer resource-scoped |
+| **Panel widgets** | Only if you want a global board, usually prefer resource-scoped                                |
 
 ---
 
@@ -596,10 +595,10 @@ The browser cannot bypass step 3 — enforcement lives in your state machine, no
 - **Laravel 11–13**
 - **PHP 8.3+**
 - `StatusTimelineEntry` uses the Filament v5 schemas/infolists API
-- Kanban CSS and JS are bundled via `FilamentAsset` — run `php artisan filament:assets` after install
+- Kanban CSS and JS are bundled via `FilamentAsset`, run `php artisan filament:assets` after install
 
 ---
 
 ## License
 
-MIT
+[MIT](LICENSE)
