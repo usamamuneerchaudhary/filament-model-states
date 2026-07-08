@@ -1,5 +1,7 @@
 # Filament Model States
 
+![kanban.gif](public/images/kanban.gif)
+
 State-aware **Kanban board** and **status timeline** components for Filament v5.
 
 Built to sit on top of:
