@@ -470,13 +470,13 @@ class OrderInfolist
 }
 ```
 
-The timeline reads `$record->statuses()`, shows each state with reason and duration, and highlights the current one.
+The timeline reads `$record->statuses()`, shows each state with reason and duration, and highlights the current one. Status labels match the Kanban board (enum `label()`, Spatie state `label()`, or a headline fallback).
 
 ### Options
 
 ```php
 StatusTimelineEntry::make('status_history')
-    ->limit(20)              // max entries shown
+    ->limit(20)              // max entries shown (no pagination UI)
     ->hideReason()           // hide the reason text
     ->emptyStateLabel('No changes yet.');
 ```
