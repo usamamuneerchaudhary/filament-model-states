@@ -6,6 +6,9 @@
 [![Code Intelligence Status](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/badges/code-intelligence.svg?b=main)](https://scrutinizer-ci.com/code-intelligence)
 [![Total Downloads](https://img.shields.io/packagist/dt/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://packagist.org/packages/usamamuneerchaudhary/filament-model-states)
 [![Licence](https://img.shields.io/packagist/l/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://github.com/usamamuneerchaudhary/filament-model-states/blob/HEAD/LICENSE.md)
+
+![filament-model-states-thumbnail.jpg](public/images/filament-model-states-thumbnail.jpg)
+## In Action
 ![kanban.gif](public/images/kanban.gif)
 
 State-aware **Kanban board** and **status timeline** components for Filament v5.
