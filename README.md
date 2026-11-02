@@ -297,8 +297,61 @@ On drag-and-drop:
 
 1. **UI**: only allowed target columns are highlighted; invalid targets are blocked client-side.
 2. **Server**: `$currentState->canTransitionTo($targetStateClass)` is called before saving.
-3. **Persist**: `$currentState->transitionTo($targetStateClass)` runs your transition classes (`ToAwaitingPayment`, etc.).
+3. **Persist**: `$currentState->transitionTo($targetStateClass)` runs your transition classes (`ToAwaitingPayment`, etc.). Extra constructor arguments are collected in a modal first.
 4. **History**: if the model uses `HasStatuses`, `setStatus()` is called automatically.
+
+### Parameterized transitions
+
+If a Spatie transition constructor needs more than the model, dropping a card opens a Filament action modal instead of saving immediately.
+
+```php
+use Filament\Forms\Components\TextInput;
+use Spatie\ModelStates\Transition;
+
+class ToFailed extends Transition
+{
+    public function __construct(
+        protected Transaction $transaction,
+        public string $reason,
+    ) {}
+
+    public static function transitionForm(): array
+    {
+        return [
+            TextInput::make('reason')->label('Reason')->required(),
+        ];
+    }
+
+    public function handle(): Transaction
+    {
+        $this->transaction->failure_reason = $this->reason;
+        $this->transaction->state = new Failed($this->transaction);
+        $this->transaction->save();
+
+        return $this->transaction;
+    }
+}
+```
+
+Without `transitionForm()`, the package maps `string`, `int`, `float`, `bool`, and backed enums to form fields. Add `transitionForm()` when a parameter cannot be mapped.
+
+Turn the prompt off with `filament-model-states.kanban.prompt_for_transition_arguments`.
+
+### Transition abilities
+
+`Gate::authorize('update', $record)` still runs. Map a specific transition to another ability so that target is hidden and rejected on the server:
+
+```php
+protected function getTransitionAbilities(): array
+{
+    return [
+        'pending->approved' => 'approve-transactions',
+    ];
+}
+```
+
+The same `->abilities()` method exists on `StateSelectColumn`, `StateAction`, and `StateBulkAction`.
+
 
 ### Column keys and labels
 
@@ -422,7 +475,33 @@ Use `HasStatuses` on the model. Each successful drag calls:
 $record->setStatus($targetColumn, 'Moved via Kanban board');
 ```
 
-Customize the reason by extending `StateKanbanBoard::persistStateChange()`.
+Customize the reason by extending `StateKanbanBoard::persistStateChange()`. The optional fourth argument is the positional list passed to `transitionTo()`.
+
+## Table components
+
+```php
+use Usamamuneerchaudhary\FilamentModelStates\Actions\StateAction;
+use Usamamuneerchaudhary\FilamentModelStates\Actions\StateBulkAction;
+use Usamamuneerchaudhary\FilamentModelStates\Tables\Columns\StateSelectColumn;
+use Usamamuneerchaudhary\FilamentModelStates\Tables\Filters\StateSelectFilter;
+
+StateSelectColumn::make('workflow_state')
+    ->abilities([
+        'draft->pending' => 'submit-orders',
+    ]);
+
+StateAction::make('approve')
+    ->target('approved')
+    ->stateField('workflow_state');
+
+StateBulkAction::make('approveSelected')
+    ->target('approved');
+
+StateSelectFilter::make('workflow_state');
+```
+
+`StateSelectColumn` only lists the current state and transitions the record is allowed to make. A rejected change restores the previous value and sends a notification. Transitions that need extra input stay on `StateAction`, which opens the same modal as the Kanban board. `StateBulkAction` updates each selected record that can make the transition and reports how many were skipped.
+
 
 ### Spatie state class resolution
 
