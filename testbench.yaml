@@ -1,0 +1,2 @@
+providers:
+  - Usamamuneerchaudhary\FilamentModelStates\Tests\Phpstan\ViewsServiceProvider

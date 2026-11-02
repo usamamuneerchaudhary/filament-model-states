@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Usamamuneerchaudhary\FilamentModelStates\Support;
 
+use BackedEnum;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 readonly class StateConfiguration
@@ -27,11 +29,13 @@ readonly class StateConfiguration
 
     public function labelFor(string $key): string
     {
-        if ($this->enumClass !== null && enum_exists($this->enumClass)) {
-            $case = $this->enumClass::tryFrom($key);
+        $enumClass = $this->enumClass;
+
+        if (is_string($enumClass) && is_subclass_of($enumClass, BackedEnum::class)) {
+            $case = $enumClass::tryFrom($key);
 
             if ($case !== null && method_exists($case, 'label')) {
-                return $case->label();
+                return (string) $case->label();
             }
         }
 
@@ -48,15 +52,29 @@ readonly class StateConfiguration
         return Str::headline($key);
     }
 
+    /**
+     * @param  Builder<Model>  $query
+     * @return Builder<Model>
+     */
     public function applySearch(Builder $query, string $search): Builder
     {
-        $modelClass = $this->modelClass;
-
-        if (method_exists($modelClass, 'scopeFilamentKanbanSearch')) {
-            return $query->filamentKanbanSearch($search);
+        if (! is_a($this->modelClass, Model::class, true)) {
+            return $query;
         }
 
-        return $query;
+        $model = new $this->modelClass;
+
+        if (! method_exists($model, 'scopeFilamentKanbanSearch')) {
+            return $query;
+        }
+
+        $result = call_user_func([$model, 'scopeFilamentKanbanSearch'], $query, $search);
+
+        if (! $result instanceof Builder) {
+            return $query;
+        }
+
+        return $result;
     }
 
     /**

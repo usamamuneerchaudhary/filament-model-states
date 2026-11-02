@@ -68,7 +68,7 @@ class StateConfigurationResolver
         }
 
         foreach ($casts as $field => $cast) {
-            if (! is_string($cast) || ! enum_exists($cast) || ! is_subclass_of($cast, BackedEnum::class)) {
+            if (! enum_exists($cast) || ! is_subclass_of($cast, BackedEnum::class)) {
                 continue;
             }
 
@@ -78,7 +78,7 @@ class StateConfigurationResolver
         }
 
         foreach ($casts as $field => $cast) {
-            if (is_string($cast) && enum_exists($cast) && is_subclass_of($cast, BackedEnum::class)) {
+            if (enum_exists($cast) && is_subclass_of($cast, BackedEnum::class)) {
                 return $field;
             }
         }
@@ -154,12 +154,16 @@ class StateConfigurationResolver
             return null;
         }
 
-        /** @var list<class-string> $stateClasses */
-        $stateClasses = collect($baseStateClass::getStateMapping())
-            ->values()
-            ->filter(fn (string $stateClass): bool => class_exists($stateClass))
-            ->values()
-            ->all();
+        $stateClasses = [];
+        $mapping = $baseStateClass::getStateMapping();
+
+        if (is_iterable($mapping)) {
+            foreach ($mapping as $stateClass) {
+                if (is_string($stateClass) && class_exists($stateClass)) {
+                    $stateClasses[] = $stateClass;
+                }
+            }
+        }
 
         if ($stateClasses === []) {
             return null;
@@ -188,7 +192,7 @@ class StateConfigurationResolver
         $model = new $modelClass;
         $cast = $model->getCasts()[$field] ?? null;
 
-        if (! $this->isSpatieStateCast($cast)) {
+        if (! is_string($cast) || ! $this->isSpatieStateCast($cast)) {
             return null;
         }
 

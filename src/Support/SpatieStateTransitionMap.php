@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Usamamuneerchaudhary\FilamentModelStates\Support;
 
+use Spatie\ModelStates\StateConfig;
+use UnexpectedValueException;
+
 class SpatieStateTransitionMap
 {
     /**
@@ -30,12 +33,17 @@ class SpatieStateTransitionMap
             $columnKeyByMorph[$stateClass::getMorphClass()] = $columnKey;
         }
 
-        $columns = array_values(array_map(
+        $columns = array_map(
             fn (string $stateClass): string => self::columnKeyForStateClass($stateClass),
             $stateClasses,
-        ));
+        );
 
         $config = $baseStateClass::config();
+
+        if (! $config instanceof StateConfig) {
+            throw new UnexpectedValueException("[{$baseStateClass}] did not return a Spatie state config.");
+        }
+
         $transitions = self::transitionsFromConfig($config, $stateClasses, $columnKeyByMorph, $columns);
 
         return [
@@ -60,7 +68,7 @@ class SpatieStateTransitionMap
      * @return array<string, list<string>>
      */
     protected static function transitionsFromConfig(
-        object $config,
+        StateConfig $config,
         array $stateClasses,
         array $columnKeyByMorph,
         array $columnOrder,
@@ -71,14 +79,22 @@ class SpatieStateTransitionMap
         foreach ($stateClasses as $stateClass) {
             $fromKey = self::columnKeyForStateClass($stateClass);
             $fromMorph = $stateClass::getMorphClass();
+            $targets = [];
 
-            $transitionableMorphs = $config->transitionableStates($fromMorph);
+            foreach ($config->transitionableStates($fromMorph) as $toMorph) {
+                if (! is_string($toMorph)) {
+                    continue;
+                }
 
-            $transitions[$fromKey] = collect($transitionableMorphs)
-                ->map(fn (string $toMorph): string => $columnKeyByMorph[$toMorph] ?? $toMorph)
-                ->sortBy(fn (string $targetKey): int => $columnPositions[$targetKey] ?? PHP_INT_MAX)
-                ->values()
-                ->all();
+                $targets[] = $columnKeyByMorph[$toMorph] ?? $toMorph;
+            }
+
+            usort(
+                $targets,
+                fn (string $left, string $right): int => ($columnPositions[$left] ?? PHP_INT_MAX) <=> ($columnPositions[$right] ?? PHP_INT_MAX),
+            );
+
+            $transitions[$fromKey] = $targets;
         }
 
         return $transitions;

@@ -78,6 +78,8 @@ class StatusTimelineEntry extends Entry
      * relation (requires the model to use the HasStatuses trait) and
      * shapes it into a simple, view-friendly collection with computed
      * "duration in this state" for each step.
+     *
+     * @return Collection<int, array<string, mixed>>
      */
     public function getTimelineData(): Collection
     {

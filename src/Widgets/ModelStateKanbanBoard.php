@@ -49,6 +49,9 @@ class ModelStateKanbanBoard extends StateKanbanBoard
         return $this->configuration()->stateField;
     }
 
+    /**
+     * @return list<string>
+     */
     protected function getColumns(): array
     {
         return $this->configuration()->columns;
@@ -64,6 +67,10 @@ class ModelStateKanbanBoard extends StateKanbanBoard
         return $this->configuration()->labelFor($key);
     }
 
+    /**
+     * @param  Builder<Model>  $query
+     * @return Builder<Model>
+     */
     protected function applySearch(Builder $query, string $search): Builder
     {
         return $this->configuration()->applySearch($query, $search);
