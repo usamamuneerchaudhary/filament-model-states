@@ -45,5 +45,9 @@ return [
 
         // Ask for confirmation in a modal before persisting a drag-and-drop move.
         'confirm_before_move' => true,
+
+        // When a Spatie transition needs constructor arguments, open a modal
+        // instead of failing the drop.
+        'prompt_for_transition_arguments' => true,
     ],
 ];

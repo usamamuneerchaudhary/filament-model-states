@@ -10,6 +10,8 @@ use Filament\Support\Facades\FilamentAsset;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Usamamuneerchaudhary\FilamentModelStates\Commands\MakeKanbanCommand;
+use Usamamuneerchaudhary\FilamentModelStates\Support\StateTransitionRunner;
+use Usamamuneerchaudhary\FilamentModelStates\Support\TransitionFormFactory;
 
 class FilamentModelStatesServiceProvider extends PackageServiceProvider
 {
@@ -20,6 +22,12 @@ class FilamentModelStatesServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews('filament-model-states')
             ->hasCommand(MakeKanbanCommand::class);
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(TransitionFormFactory::class);
+        $this->app->singleton(StateTransitionRunner::class);
     }
 
     public function packageBooted(): void

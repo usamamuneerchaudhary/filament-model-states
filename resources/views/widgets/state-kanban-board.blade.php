@@ -19,6 +19,7 @@
             })"
             x-on:kanban-move-accepted.window="handleMoveAccepted($event.detail)"
             x-on:kanban-move-rejected.window="handleMoveRejected()"
+            x-on:kanban-move-needs-input.window="handleMoveNeedsInput()"
         >
             <div class="fi-model-states-kanban__toolbar">
                 <div class="fi-model-states-kanban__search">
@@ -94,6 +95,7 @@
                             @forelse ($records as $record)
                                 <div
                                     data-record-id="{{ $record->getKey() }}"
+                                    data-allowed-targets='@json($this->allowedTargetsForRecord($record))'
                                     class="fi-model-states-kanban__card fi-model-states-card"
                                 >
                                     <p class="fi-model-states-kanban__card-title">
@@ -155,6 +157,8 @@
             </template>
         </div>
     </x-filament::section>
+
+    <x-filament-actions::modals />
 
     @filamentScripts(['filament-model-states'])
 </x-filament-widgets::widget>

@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace Usamamuneerchaudhary\FilamentModelStates\Widgets;
 
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Widgets\Widget;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,10 +19,18 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Throwable;
+use Usamamuneerchaudhary\FilamentModelStates\Support\StateTransitionContext;
+use Usamamuneerchaudhary\FilamentModelStates\Support\StateTransitionRunner;
+use Usamamuneerchaudhary\FilamentModelStates\Support\TransitionResult;
+use Usamamuneerchaudhary\FilamentModelStates\Support\TransitionResultStatus;
 
-abstract class StateKanbanBoard extends Widget
+abstract class StateKanbanBoard extends Widget implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     protected string $view = 'filament-model-states::widgets.state-kanban-board';
 
     protected int|string|array $columnSpan = 'full';
@@ -25,6 +38,11 @@ abstract class StateKanbanBoard extends Widget
     public string $search = '';
 
     public ?string $columnFilter = null;
+
+    /**
+     * @var array{recordId: int|string, targetColumn: string}|null
+     */
+    public ?array $pendingTransition = null;
 
     /**
      * @var list<array{key: string, records: Collection<int, Model>, total: int, shown: int, has_more: bool}>|null
@@ -43,6 +61,8 @@ abstract class StateKanbanBoard extends Widget
 
     /**
      * Ordered list of column keys, e.g. ['draft', 'pending', 'processing', 'completed'].
+     *
+     * @return list<string>
      */
     abstract protected function getColumns(): array;
 
@@ -117,7 +137,7 @@ abstract class StateKanbanBoard extends Widget
         if ($allowedTransitions !== null) {
             return collect($columns)
                 ->mapWithKeys(fn (string $column): array => [
-                    $column => array_values($allowedTransitions[$column] ?? []),
+                    $column => $allowedTransitions[$column] ?? [],
                 ])
                 ->all();
         }
@@ -165,20 +185,34 @@ abstract class StateKanbanBoard extends Widget
 
     /**
      * Override to scope/filter/eager-load the query.
+     *
+     * @return Builder<Model>
      */
     protected function getQuery(): Builder
     {
-        return $this->getModel()::query();
+        $modelClass = $this->getModel();
+
+        if (! is_a($modelClass, Model::class, true)) {
+            throw new InvalidArgumentException("[{$modelClass}] is not an Eloquent model.");
+        }
+
+        return $modelClass::query();
     }
 
     /**
      * Override to apply free-text search to the board query.
+     *
+     * @param  Builder<Model>  $query
+     * @return Builder<Model>
      */
     protected function applySearch(Builder $query, string $search): Builder
     {
         return $query;
     }
 
+    /**
+     * @return Builder<Model>
+     */
     protected function getFilteredQuery(): Builder
     {
         $query = $this->getQuery();
@@ -220,6 +254,7 @@ abstract class StateKanbanBoard extends Widget
     }
 
     /**
+     * @param  list<string>  $columns
      * @return array<string, Collection<int, Model>>
      */
     protected function fetchRecordsGroupedByColumn(array $columns, int $limit): array
@@ -298,9 +333,37 @@ abstract class StateKanbanBoard extends Widget
     }
 
     /**
-     * Called from the frontend when a card is dropped on a new column.
+     * Map a source column and target column to a gate ability.
+     * Keys use "from->to", for example "pending->approved".
+     *
+     * @return array<string, string>
      */
-    public function moveRecord(int|string $recordId, string $targetColumn): void
+    protected function getTransitionAbilities(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function allowedTargetsForRecord(Model $record): array
+    {
+        $sourceColumn = $this->resolveColumnKey($record);
+
+        return app(StateTransitionRunner::class)->filterAbilities(
+            $record,
+            $sourceColumn,
+            $this->getOutgoingTransitions($sourceColumn),
+            $this->getTransitionAbilities(),
+        );
+    }
+
+    /**
+     * Called from the frontend when a card is dropped on a new column.
+     *
+     * @param  array<string, mixed>  $arguments
+     */
+    public function moveRecord(int|string $recordId, string $targetColumn, array $arguments = []): void
     {
         if (! in_array($targetColumn, $this->getColumns(), true)) {
             $this->rejectMove(null, $targetColumn, 'Unknown target column.');
@@ -310,38 +373,86 @@ abstract class StateKanbanBoard extends Widget
 
         $sourceColumn = null;
         $moved = false;
+        $awaitingInput = false;
 
         try {
-            DB::transaction(function () use ($recordId, $targetColumn, &$sourceColumn, &$moved): void {
+            DB::transaction(function () use ($recordId, $targetColumn, $arguments, &$sourceColumn, &$moved, &$awaitingInput): void {
                 /** @var Model $record */
                 $record = $this->getQuery()->lockForUpdate()->findOrFail($recordId);
 
                 $this->authorizeMoveRecord($record);
 
                 $currentState = $record->{$this->getStateField()};
-                $sourceColumn = $this->resolveColumnKey($record);
+                $result = app(StateTransitionRunner::class)->evaluate(
+                    $this->makeTransitionContext($record, $targetColumn, $arguments),
+                );
 
-                if ($sourceColumn === $targetColumn) {
+                $sourceColumn = $result->sourceColumn ?? $this->resolveColumnKey($record);
+
+                if ($result->status === TransitionResultStatus::Unchanged) {
                     return;
                 }
 
-                if (! $this->canTransitionTo($currentState, $sourceColumn, $targetColumn)) {
-                    $this->rejectMove($currentState, $targetColumn);
+                if (! $this->stateUsesConfig($currentState)) {
+                    if (! $this->canTransitionTo($currentState, $sourceColumn, $targetColumn)) {
+                        $this->rejectMove($currentState, $targetColumn);
+
+                        return;
+                    }
+
+                    if ($result->status === TransitionResultStatus::Rejected) {
+                        $result = new TransitionResult(
+                            status: TransitionResultStatus::Ready,
+                            sourceColumn: $sourceColumn,
+                            targetColumn: $targetColumn,
+                        );
+                    }
+                } elseif ($result->status === TransitionResultStatus::Rejected) {
+                    $this->rejectMove($currentState, $targetColumn, $result->message);
 
                     return;
                 }
 
-                $this->persistStateChange($record, $currentState, $targetColumn);
+                if ($result->status === TransitionResultStatus::NeedsInput) {
+                    if ($arguments !== [] || ! config('filament-model-states.kanban.prompt_for_transition_arguments', true)) {
+                        $this->rejectMove($currentState, $targetColumn, 'This transition needs additional input.');
+
+                        return;
+                    }
+
+                    $key = $record->getKey();
+                    $this->pendingTransition = [
+                        'recordId' => is_int($key) || is_string($key) ? $key : (string) $key,
+                        'targetColumn' => $targetColumn,
+                    ];
+                    $awaitingInput = true;
+
+                    return;
+                }
+
+                if ($result->positionalArguments === []) {
+                    $this->persistStateChange($record, $currentState, $targetColumn);
+                } else {
+                    $this->persistStateChange($record, $currentState, $targetColumn, $result->positionalArguments);
+                }
+
                 $moved = true;
             });
-        } catch (Throwable $e) {
-            if ($this->shouldRejectMoveException($e)) {
-                $this->rejectMove(null, $targetColumn, $e->getMessage());
+        } catch (Throwable $exception) {
+            if ($this->shouldRejectMoveException($exception)) {
+                $this->rejectMove(null, $targetColumn, $exception->getMessage());
 
                 return;
             }
 
-            throw $e;
+            throw $exception;
+        }
+
+        if ($awaitingInput) {
+            $this->openTransitionModal();
+            $this->dispatch('kanban-move-needs-input');
+
+            return;
         }
 
         if (! $moved || $sourceColumn === null) {
@@ -361,9 +472,48 @@ abstract class StateKanbanBoard extends Widget
         );
     }
 
+    public function provideTransitionArgumentsAction(): Action
+    {
+        return Action::make('provideTransitionArguments')
+            ->modalHeading('Complete transition')
+            ->modalSubmitActionLabel('Apply transition')
+            ->schema(function (): array {
+                $pending = $this->pendingTransition;
+
+                if ($pending === null) {
+                    return [];
+                }
+
+                $record = $this->getQuery()->find($pending['recordId']);
+
+                if (! $record instanceof Model) {
+                    return [];
+                }
+
+                return app(StateTransitionRunner::class)
+                    ->evaluate($this->makeTransitionContext($record, $pending['targetColumn']))
+                    ->schema;
+            })
+            ->action(function (array $data): void {
+                $pending = $this->pendingTransition;
+
+                if ($pending === null) {
+                    return;
+                }
+
+                $this->pendingTransition = null;
+                $this->moveRecord($pending['recordId'], $pending['targetColumn'], $data);
+            });
+    }
+
     protected function authorizeMoveRecord(Model $record): void
     {
         Gate::authorize('update', $record);
+    }
+
+    protected function stateUsesConfig(mixed $currentState): bool
+    {
+        return is_object($currentState) && method_exists($currentState, 'config');
     }
 
     protected function canTransitionTo(mixed $currentState, string $currentColumn, string $targetColumn): bool
@@ -381,21 +531,49 @@ abstract class StateKanbanBoard extends Widget
         return in_array($targetColumn, $allowedTransitions[$currentColumn] ?? [], true);
     }
 
-    protected function persistStateChange(Model $record, mixed $currentState, string $targetColumn): void
+    /**
+     * @param  list<mixed>  $transitionArguments
+     */
+    protected function persistStateChange(Model $record, mixed $currentState, string $targetColumn, array $transitionArguments = []): void
     {
-        $field = $this->getStateField();
-        $targetState = $this->resolveStateClass($targetColumn);
+        app(StateTransitionRunner::class)->persist(
+            $this->makeTransitionContext($record, $targetColumn),
+            new TransitionResult(
+                status: TransitionResultStatus::Ready,
+                positionalArguments: $transitionArguments,
+            ),
+        );
+    }
 
-        if (is_object($currentState) && method_exists($currentState, 'transitionTo')) {
-            $currentState->transitionTo($targetState);
-        } else {
-            $record->{$field} = $this->resolveStateValue($targetColumn);
-            $record->save();
+    /**
+     * @param  array<string, mixed>  $arguments
+     */
+    protected function makeTransitionContext(Model $record, string $targetColumn, array $arguments = []): StateTransitionContext
+    {
+        $resolved = $this->resolveStateClass($targetColumn);
+
+        return new StateTransitionContext(
+            record: $record,
+            stateField: $this->getStateField(),
+            targetColumn: $targetColumn,
+            arguments: $arguments,
+            allowedTransitions: $this->getAllowedTransitions(),
+            targetStateClass: class_exists($resolved) ? $resolved : null,
+            abilities: $this->getTransitionAbilities(),
+            authorizeUpdate: false,
+            statusReason: 'Moved via Kanban board',
+        );
+    }
+
+    protected function openTransitionModal(): void
+    {
+        $id = $this->getId();
+
+        if (! is_string($id) || $id === '') {
+            return;
         }
 
-        if (method_exists($record, 'setStatus') && $record->status()?->name !== $targetColumn) {
-            $record->setStatus($targetColumn, 'Moved via Kanban board');
-        }
+        $this->mountAction('provideTransitionArguments');
     }
 
     protected function resolveStateValue(string $column): mixed
@@ -420,31 +598,7 @@ abstract class StateKanbanBoard extends Widget
 
     protected function normalizeStateToColumnKey(mixed $state): string
     {
-        if ($state instanceof BackedEnum) {
-            return (string) $state->value;
-        }
-
-        if (is_object($state)) {
-            $stateClass = $state::class;
-
-            if (method_exists($stateClass, 'getMorphClass')) {
-                return (string) $stateClass::getMorphClass();
-            }
-
-            if (method_exists($state, 'getValue')) {
-                return (string) $state->getValue();
-            }
-
-            if (property_exists($state, 'name')) {
-                return (string) $state->name;
-            }
-
-            $classBaseName = class_basename($state);
-
-            return Str::snake($classBaseName);
-        }
-
-        return (string) $state;
+        return app(StateTransitionRunner::class)->columnKey($state);
     }
 
     protected function formatStateLabel(mixed $state): string

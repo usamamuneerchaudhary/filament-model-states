@@ -45,9 +45,10 @@ document.addEventListener('alpine:init', () => {
                 const sortable = Sortable.create(columnEl, {
                     group: {
                         name: 'kanban-columns',
-                        put: (to, from) => this.canDrop(
+                        put: (to, from, dragEl) => this.canDrop(
                             from.el.dataset.column,
                             to.el.dataset.column,
+                            dragEl,
                         ),
                     },
                     animation: 150,
@@ -55,7 +56,7 @@ document.addEventListener('alpine:init', () => {
                     ghostClass: 'fi-model-states-kanban__card--ghost',
                     dragClass: 'fi-model-states-kanban__card--dragging',
                     onStart: (evt) => {
-                        this.highlightValidTargets(evt.from.dataset.column);
+                        this.highlightValidTargets(evt.from.dataset.column, evt.item);
                     },
                     onEnd: (evt) => {
                         this.clearHighlights();
@@ -105,18 +106,34 @@ document.addEventListener('alpine:init', () => {
             return this.$wire ?? null;
         },
 
-        canDrop(source, target) {
+        allowedTargetsFor(dragEl) {
+            const raw = dragEl?.dataset?.allowedTargets;
+
+            if (! raw) {
+                return null;
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+
+                return Array.isArray(parsed) ? parsed : null;
+            } catch (error) {
+                return null;
+            }
+        },
+
+        canDrop(source, target, dragEl) {
             if (! source || ! target || source === target) {
                 return false;
             }
 
-            const allowed = this.transitions[source] ?? [];
+            const allowed = this.allowedTargetsFor(dragEl) ?? this.transitions[source] ?? [];
 
             return allowed.includes(target);
         },
 
-        highlightValidTargets(source) {
-            const allowed = this.transitions[source] ?? [];
+        highlightValidTargets(source, dragEl) {
+            const allowed = this.allowedTargetsFor(dragEl) ?? this.transitions[source] ?? [];
 
             this.$el.querySelectorAll('.fi-model-states-kanban__column').forEach((column) => {
                 const key = column.dataset.column;
@@ -200,6 +217,12 @@ document.addEventListener('alpine:init', () => {
         handleMoveRejected() {
             this.resetModal();
             this.getWire()?.$refresh();
+        },
+
+        handleMoveNeedsInput() {
+            this.awaitingMove = null;
+            this.showConfirm = false;
+            this.pendingMove = null;
         },
 
         updateCounts(source, target) {
