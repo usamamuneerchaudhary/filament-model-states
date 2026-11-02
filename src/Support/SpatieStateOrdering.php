@@ -142,9 +142,13 @@ class SpatieStateOrdering
         }
 
         foreach (array_keys($config->allowedTransitions) as $transitionKey) {
-            [$fromMorph, $toMorph] = explode('->', (string) $transitionKey, 2);
+            $morphs = self::transitionKeyParts((string) $transitionKey);
 
-            foreach ([$fromMorph, $toMorph] as $morph) {
+            if ($morphs === null) {
+                continue;
+            }
+
+            foreach ($morphs as $morph) {
                 if (! in_array($morph, $orderedMorphs, true)) {
                     $orderedMorphs[] = $morph;
                 }
@@ -185,6 +189,28 @@ class SpatieStateOrdering
         }
 
         return $ordered;
+    }
+
+    /**
+     * Split a Spatie transition key into the source and target morphs.
+     * Returns null when the key has no separator.
+     * Spatie 2.12 joins the morphs with a hyphen. Later releases use an arrow.
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    protected static function transitionKeyParts(string $transitionKey): ?array
+    {
+        if (str_contains($transitionKey, '->')) {
+            $parts = explode('->', $transitionKey, 2);
+        } else {
+            $parts = explode('-', $transitionKey, 2);
+        }
+
+        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
+            return null;
+        }
+
+        return [$parts[0], $parts[1]];
     }
 
     /**
