@@ -22,10 +22,13 @@
         "spatie/laravel-model-states": "Required if you want Kanban drag-and-drop with server-side transition validation (canTransitionTo). Without it, the Kanban board still works but allows any column move."
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.18",
         "orchestra/testbench": "^9.0|^10.0|^11.0",
         "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0"
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "spatie/laravel-model-states": "^2.10",
+        "usamamuneerchaudhary/laravel-slipway": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -46,7 +49,11 @@
     },
     "scripts": {
         "test": "vendor/bin/pest",
-        "format": "vendor/bin/pint"
+        "format": "vendor/bin/pint",
+        "analyse": "vendor/bin/phpstan analyse --no-progress --memory-limit=1G",
+        "post-autoload-dump": [
+            "@php vendor/bin/testbench package:discover --ansi"
+        ]
     },
     "config": {
         "sort-packages": true,
