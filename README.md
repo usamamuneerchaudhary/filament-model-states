@@ -5,6 +5,7 @@
 [![Build Status](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/badges/build.png?b=main)](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/build-status/main)
 [![Code Intelligence Status](https://scrutinizer-ci.com/g/usamamuneerchaudhary/filament-model-states/badges/code-intelligence.svg?b=main)](https://scrutinizer-ci.com/code-intelligence)
 [![Total Downloads](https://img.shields.io/packagist/dt/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://packagist.org/packages/usamamuneerchaudhary/filament-model-states)
+[![Daily Downloads](https://img.shields.io/packagist/dd/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://packagist.org/packages/usamamuneerchaudhary/filament-model-states)
 [![Licence](https://img.shields.io/packagist/l/usamamuneerchaudhary/filament-model-states?style=flat-square)](https://github.com/usamamuneerchaudhary/filament-model-states/blob/HEAD/LICENSE.md)
 
 <img src="public/images/filament-model-states-thumbnail.jpg" alt="filament-model-states-thumbnail.jpg" class="filament-hidden" />
